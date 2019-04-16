@@ -1,0 +1,15 @@
+{
+    "services": [
+        {
+            "id": "github",
+            "name": "GitHub",
+            "statusUrl": "https://status.github.com/",
+            "statusApiUrl": "https://kctbh9vrtdwd.statuspage.io/api/v2/status.json"
+        },
+        {
+            "id": "bitbucket",
+            "name": "Bitbucket",
+            "statusUrl": "https://status.bitbucket.org/",
+            "statusApiUrl": "https://bqlf8qjztdtr.statuspage.io/api/v2/status.json"
+} ]
+}
