@@ -67,6 +67,13 @@ public class App {
       return p;
     }
     
+    public static void showServicesCommand() {
+    	for(Platform p: App.platforms) {
+    		System.out.println("Service name:" + p.getName());
+    		System.out.println("Service Endpoint:" + p.getStatusApiUrl() + "\n");
+    	}
+    }
+    
 	public static void main(String[] args){
         App.readJsonFileWithProperties();
         for(Platform p: platforms){
@@ -92,7 +99,7 @@ public class App {
                    System.out.println("3");
                   break;
                 case "bot services":
-                   System.out.println("4");
+                   App.showServicesCommand();
                   break;
                 case "bot help":
                    App.helpCommand();
