@@ -2,7 +2,11 @@ package domain;
 
 import java.net.URL;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 public abstract class Platform {
     private String _id;
@@ -18,11 +22,11 @@ public abstract class Platform {
     }
 
 
-    public boolean isAccessable(String url, int timeout) {
+    public boolean isAccessable(int timeout) {
         //url = url.replaceFirst("https", "http");
     
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            HttpURLConnection connection = (HttpURLConnection) new URL(_statusUrl).openConnection();
             connection.setConnectTimeout(timeout);
             connection.setReadTimeout(timeout);
             connection.setRequestMethod("HEAD");
@@ -35,6 +39,37 @@ public abstract class Platform {
         }
         return true;
     }
+    
+    
+    public String getStatus() {
+        StringBuilder result = new StringBuilder();
+        try {
+        URL url = new URL(_statusApiUrl);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        String line;
+        while ((line = rd.readLine()) != null) {
+           result.append(line);
+        }
+        rd.close();
+        }
+        
+        catch(MalformedURLException e) {
+        	e.getMessage();
+        }
+        
+        catch(ProtocolException e) {
+        	e.getMessage();
+        }
+        
+        catch(IOException e) {
+        	e.getMessage();
+        }
+  
+        
+        return result.toString();
+     }
 
     public String getId(){
         return _id;

@@ -4,10 +4,24 @@ import java.util.Scanner;
 
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+
 import java.util.Iterator;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.io.FileReader;
+import java.io.FileWriter;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import java.util.List;
@@ -74,39 +88,120 @@ public class App {
     	}
     }
     
+    public static void historyCommand() {
+    	BufferedReader reader = null;
+    	try {
+    		reader = new BufferedReader(new FileReader("appData/history.txt"));
+    	    String line = reader.readLine();
+    	    if(line == null)
+    	    	System.out.println("error: empty file");
+    	    while (line != null) {
+    	    	System.out.println(line);
+    	        line = reader.readLine();
+    	    }
+    	    reader.close();
+    	}
+    	
+    	catch(FileNotFoundException e){
+    		e.getMessage();
+    	}
+    	
+    	catch(IOException e){
+    		e.getMessage();
+    	}
+    }
+
+    
+    public static void checkServicesAvailability() {
+    	JSONObject infoJson = null;
+    	String status = null;
+    	BufferedWriter writer = null;
+		try {
+			writer = new BufferedWriter(new FileWriter("appData/history.txt", true));
+
+    	for(Platform p: platforms) {
+    		if(!p.isAccessable(10000))
+    			System.out.println("The service " + p.getName() + "status is down");
+    		else {
+    			String info = p.getStatus();
+    			JSONParser parser = new JSONParser();
+    			try {
+    				infoJson = (JSONObject) parser.parse(info);
+    			}
+    			catch(ParseException e) {
+    				e.getMessage();
+    			}
+    			JSONObject pageInfo = (JSONObject) infoJson.get("page");
+    			String update = (String) pageInfo.get("updated_at");
+    			JSONObject pageStatus = (JSONObject) infoJson.get("status");
+    			String description = (String) pageStatus.get("description");
+    			if(description.equals("All Systems Operational"))
+    				status = "up";
+    			else
+    				status = "down";
+    			System.out.println("[" + p.getId() + "] " + update + " - " + status);
+    			writer.write("[" + p.getId() + "] " + update + " - " + status);
+    			writer.newLine();
+    			}
+    		}
+    		writer.close();
+    	
+		} catch (IOException e1) {
+			e1.getMessage();
+		}
+    }
+    
+    public static void backupCommand(String file) {
+    	Path source = Paths.get(file);
+    	String[] fileProperties = file.split("/");
+    	String fileName = fileProperties[fileProperties.length-1];
+    	Path target = Paths.get("appData/" + fileName);
+    	
+    	try {
+    		Files.copy(source, target);
+    	} catch(IOException e) {
+    		e.getMessage();
+    	}
+    }
+    
+    public static void getcommandOption(String command) {
+    	String[] parts = null;
+    	if(command.equals("bot poll"))
+    		App.checkServicesAvailability();
+    	
+    	else if(command.equals("bot history"))
+    		App.historyCommand();
+    	
+    	else if(command.equals("bot services"))
+    		App.showServicesCommand();
+    	
+    	else if(command.equals("bot help"))
+    		App.helpCommand();
+    	
+    	else if(command.equals("bot fetch"))
+    		System.out.println("fetch");
+    	
+    	else if(command.contains("bot backup ")) {
+    		parts = command.split("bot backup ");
+    		String file = parts[1];
+    		App.backupCommand(file);
+    	}
+    	
+    	else if(command.contains("bot restore ")) {
+    		parts = command.split("bot restore ");
+    		String file = parts[1];
+    	}
+    	
+    	else
+    		System.out.println("invalid command");
+    }
+    
 	public static void main(String[] args){
         App.readJsonFileWithProperties();
-        for(Platform p: platforms){
-          System.out.println(p.getId());
-          System.out.println(p.getName());
-          System.out.println(p.getStatusUrl());
-          System.out.println(p.getStatusApiUrl());
-        }
         Scanner scanner = new Scanner(System.in);
         while(true){
             String command = scanner.nextLine();
-            switch(command) {
-                case "bot poll":
-                  System.out.println("0");
-                  break;
-                case "bot fetch":
-                   System.out.println("1");
-                  break;
-                case "bot history":
-                   System.out.println("2");
-                  break;
-                case "bot backup":
-                   System.out.println("3");
-                  break;
-                case "bot services":
-                   App.showServicesCommand();
-                  break;
-                case "bot help":
-                   App.helpCommand();
-                  break;
-                default:
-                  System.out.println("invalid command");
-              }
+            App.getcommandOption(command);
         }
     }
 }
