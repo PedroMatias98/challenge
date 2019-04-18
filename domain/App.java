@@ -1,6 +1,8 @@
 package domain;
 
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -8,12 +10,10 @@ import org.json.simple.parser.ParseException;
 import java.io.File;
 
 import java.util.Iterator;
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -207,6 +207,20 @@ public class App {
     	}
     }
     
+    
+    public static void fetchCommand(int interval) {
+    	Timer timer = new Timer();
+    	timer.schedule( 
+    	        new TimerTask() {
+    	            @Override
+    	            public void run() {
+    	                App.checkServicesAvailability();
+    	            }
+    	        }, 
+    	        0,interval * 1000 
+    	);
+    }
+    
     public static void getcommandOption(String command) {
     	String[] parts = null;
     	if(command.equals("bot poll"))
@@ -222,7 +236,13 @@ public class App {
     		App.helpCommand();
     	
     	else if(command.equals("bot fetch"))
-    		System.out.println("fetch");
+    		App.fetchCommand(5);
+    	
+    	else if(command.contains("bot fetch --refresh=")) {
+    		parts = command.split("bot fetch --refresh=");
+    		String interval = parts[1];
+    		App.fetchCommand(Integer.valueOf(interval));
+    	}
     	
     	else if(command.contains("bot restore ")) {
     		parts = command.split("bot restore ");
