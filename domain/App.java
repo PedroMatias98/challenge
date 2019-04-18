@@ -7,6 +7,9 @@ import java.util.TimerTask;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import exceptions.EmptyFileException;
+import exceptions.InvalidFileFormatException;
+
 import java.io.File;
 
 import java.util.Iterator;
@@ -15,13 +18,9 @@ import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
-import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,42 +38,42 @@ public class App {
     public static void helpCommand(){
       System.out.println("\nCommand:");
       System.out.println("\tpoll - Retrieves the status from of all configured services");
-      System.out.println("\tfetch - Retrieves the status from of all configured services");
+      System.out.println("\tfetch - Retrieves the status from of all configured services within an interval");
       System.out.println("\tservices - Lists all known services");
       System.out.println("\tbackup - backups the current internal state to a file");
       System.out.println("\trestore - Imports the internal state from another run or app");
       System.out.println("\thistory - Outputs all the data from the local storage");
-      System.out.println("\tstatus - Summarizes data and displays it in a table-like fashion");
+      //System.out.println("\tstatus - Summarizes data and displays it in a table-like fashion");
       System.out.println("\thelp - This screen");
     }
 
     @SuppressWarnings("unchecked")
-    public static void readJsonFileWithProperties(){
+    public static void readJsonFileWithProperties() throws FileNotFoundException,ParseException,IOException{
       JSONParser parser = new JSONParser();
       Object obj = null;
       try{
         obj = parser.parse(new FileReader("storedData/storedData.json"));
       } catch(FileNotFoundException e){
-        System.out.println("inexistent file");
+    	  throw new FileNotFoundException("The file doesnt exist");
       }
         catch(ParseException e){
-          System.out.println("parse error");
+          throw new ParseException(e.getPosition(),e.getErrorType(),e.getUnexpectedObject());
       }
         catch(IOException e){
-          System.out.println("io error");
+          throw new IOException("There was an io error");
       }
-        JSONObject jsonObject = (JSONObject) obj;
+       JSONObject jsonObject = (JSONObject) obj;
 
-        JSONArray platformList = (JSONArray) jsonObject.get("services");
+       JSONArray platformList = (JSONArray) jsonObject.get("services");
 
-		  Iterator<JSONObject> iterator = platformList.iterator();
-        while(iterator.hasNext()){
-          jsonObject = iterator.next();
-          String id = (String) jsonObject.get("id");
-          String name = (String) jsonObject.get("name");
-          String statusUrl = (String) jsonObject.get("statusUrl");
-          String statusApiUrl = (String) jsonObject.get("statusApiUrl");
-          App.platforms.add(buildPlatform(id,name,statusUrl,statusApiUrl));
+	   Iterator<JSONObject> iterator = platformList.iterator();
+       while(iterator.hasNext()){
+         jsonObject = iterator.next();
+         String id = (String) jsonObject.get("id");
+         String name = (String) jsonObject.get("name");
+         String statusUrl = (String) jsonObject.get("statusUrl");
+         String statusApiUrl = (String) jsonObject.get("statusApiUrl");
+         App.platforms.add(buildPlatform(id,name,statusUrl,statusApiUrl));
         }
     }
 
@@ -94,13 +93,15 @@ public class App {
     	}
     }
     
-    public static void historyCommand() {
+    public static void historyCommand() throws EmptyFileException,FileNotFoundException,IOException{
     	BufferedReader reader = null;
     	try {
     		reader = new BufferedReader(new FileReader("appData/history.txt"));
     	    String line = reader.readLine();
-    	    if(line == null)
-    	    	System.out.println("error: empty file");
+    	    if(line == null) {
+    	    	reader.close();
+    	    	throw new EmptyFileException("The file is empty");
+    	    }
     	    while (line != null) {
     	    	System.out.println(line);
     	        line = reader.readLine();
@@ -109,16 +110,16 @@ public class App {
     	}
     	
     	catch(FileNotFoundException e){
-    		e.getMessage();
+    		throw new FileNotFoundException("The file doesnt exist");
     	}
     	
     	catch(IOException e){
-    		e.getMessage();
+    		throw new IOException("There was an io error");
     	}
     }
 
     
-    public static void checkServicesAvailability() {
+    public static void checkServicesAvailability() throws ParseException,IOException{
     	JSONObject infoJson = null;
     	String status = null;
     	BufferedWriter writer = null;
@@ -126,17 +127,13 @@ public class App {
 			writer = new BufferedWriter(new FileWriter("appData/history.txt", true));
 
     	for(Platform p: platforms) {
-    		if(!p.isAccessable(10000))
+    		if(!p.isAccessable(5000))
     			System.out.println("The service " + p.getName() + "status is down");
     		else {
     			String info = p.getStatus();
     			JSONParser parser = new JSONParser();
-    			try {
-    				infoJson = (JSONObject) parser.parse(info);
-    			}
-    			catch(ParseException e) {
-    				e.getMessage();
-    			}
+    			infoJson = (JSONObject) parser.parse(info);
+    			
     			JSONObject pageInfo = (JSONObject) infoJson.get("page");
     			String update = (String) pageInfo.get("updated_at");
     			JSONObject pageStatus = (JSONObject) infoJson.get("status");
@@ -152,32 +149,48 @@ public class App {
     		}
     		writer.close();
     	
-		} catch (IOException e1) {
-			e1.getMessage();
+		}
+		
+		catch(MalformedURLException e) {
+			writer.close();
+			throw new MalformedURLException("The url is malformed");
+		}
+		
+		catch(ProtocolException e) {
+			writer.close();
+			throw new ProtocolException("There was an error with the protocol");
+		}
+		
+		catch(ParseException e) {
+			writer.close();
+			throw new ParseException(e.getPosition(),e.getErrorType(),e.getUnexpectedObject());
+		}
+		
+		catch (IOException e) {
+			writer.close();
+			throw new IOException("There was an io error");
 		}
     }
     
-    public static void restoreCommand(String file) {
+    public static void restoreCommand(String file) throws InvalidFileFormatException,IOException{
     	String[] fileProperties = file.split("/");
     	String fileName = fileProperties[fileProperties.length-1];
     	
     	File fileInfo = new File(file);
         String mimeType = URLConnection.guessContentTypeFromName(fileInfo.getName());
     	try {
-    		if(!mimeType.contains("text")) {
-    			System.out.println("invalid file format");
-    			System.exit(1);
-    	}
+    		if(!mimeType.contains("text"))
+    			throw new InvalidFileFormatException("The file has an invalid format");
     	Path source = Paths.get(file);
     	Path target = Paths.get("appData/" + fileName);
 
     		Files.copy(source, target);
     	} catch(IOException e) {
-    		e.getMessage();
+    		throw new IOException("There was an io error");
     	}
     }
     
-    public static void backupCommand(String file) {
+    public static void backupCommand(String file) throws EmptyFileException,FileNotFoundException,IOException{
     	try {
     		String directory = "";
     		String[] parts = file.split("/");
@@ -188,8 +201,11 @@ public class App {
     		BufferedReader reader = new BufferedReader(new FileReader("storedData/storedData.json"));
         	PrintWriter writer = new PrintWriter(new FileWriter(file));
     	    String line = reader.readLine();
-    	    if(line == null)
-    	    	System.out.println("error: empty file");
+    	    if(line == null) {
+    	    	reader.close();
+        	    writer.close();
+    	    	throw new EmptyFileException("The file is empty");
+    	    }
     	    while (line != null) {
     	    	writer.println(line);
     	        line = reader.readLine();
@@ -199,35 +215,48 @@ public class App {
     	}
     	
     	catch(FileNotFoundException e){
-    		e.getMessage();
+    		throw new FileNotFoundException("The file doesnt exist");
     	}
     	
     	catch(IOException e){
-    		e.getMessage();
+    		throw new IOException("There was an io error");
     	}
     }
     
     
-    public static void fetchCommand(int interval) {
+    public static void fetchCommand(int interval) throws ParseException,IOException{
     	Timer timer = new Timer();
     	timer.schedule( 
     	        new TimerTask() {
     	            @Override
     	            public void run() {
+    	            	try {
     	                App.checkServicesAvailability();
+    	            	}
+    	            	
+    	            	catch(ParseException e) {
+    	            		System.out.println("There was an error parsing the file");
+    	            		System.exit(1);
+    	            	}
+    	            	
+    	            	catch(IOException e) {
+    	            		System.out.println("There was an io error");
+    	            		System.exit(1);
+    	            	}
     	            }
     	        }, 
     	        0,interval * 1000 
     	);
     }
     
-    public static void getcommandOption(String command) {
+    public static void getcommandOption(String command) throws EmptyFileException,InvalidFileFormatException,IOException,ParseException{
     	String[] parts = null;
     	if(command.equals("bot poll"))
     		App.checkServicesAvailability();
     	
-    	else if(command.equals("bot history"))
+    	else if(command.equals("bot history")) {
     		App.historyCommand();
+    	}
     	
     	else if(command.equals("bot services"))
     		App.showServicesCommand();
@@ -260,12 +289,14 @@ public class App {
     		System.out.println("invalid command");
     }
     
-	public static void main(String[] args){
+	public static void main(String[] args) throws EmptyFileException,InvalidFileFormatException,IOException,ParseException{
         App.readJsonFileWithProperties();
         Scanner scanner = new Scanner(System.in);
-        while(true){
-            String command = scanner.nextLine();
+        String command = scanner.nextLine();
+        while(!command.equals("exit")){
             App.getcommandOption(command);
+            command = scanner.nextLine();
         }
+        scanner.close();
     }
 }

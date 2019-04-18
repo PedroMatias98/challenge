@@ -23,8 +23,6 @@ public abstract class Platform {
 
 
     public boolean isAccessable(int timeout) {
-        //url = url.replaceFirst("https", "http");
-    
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(_statusUrl).openConnection();
             connection.setConnectTimeout(timeout);
@@ -41,7 +39,7 @@ public abstract class Platform {
     }
     
     
-    public String getStatus() {
+    public String getStatus() throws MalformedURLException,ProtocolException,IOException{
         StringBuilder result = new StringBuilder();
         try {
         URL url = new URL(_statusApiUrl);
@@ -56,15 +54,15 @@ public abstract class Platform {
         }
         
         catch(MalformedURLException e) {
-        	e.getMessage();
+        	throw new MalformedURLException("The url is malformed");
         }
         
         catch(ProtocolException e) {
-        	e.getMessage();
+        	throw new ProtocolException("There was an error with the protocol");
         }
         
         catch(IOException e) {
-        	e.getMessage();
+        	throw new IOException("There was an io error");
         }
   
         
