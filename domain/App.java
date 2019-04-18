@@ -184,12 +184,13 @@ public class App {
     	String fileName = fileProperties[fileProperties.length-1];
     	
     	File fileInfo = new File(file);
+    	File destFile = new File("appData/" + fileName);
         String mimeType = URLConnection.guessContentTypeFromName(fileInfo.getName());
         System.out.println(mimeType);
     	try {
     		if(!mimeType.contains("text") && !mimeType.contains("xml"))
     			throw new InvalidFileFormatException("The file has an invalid format");
-    		if(fileInfo.exists())
+    		if(destFile.exists())
     			throw new FileAlreadyExistsException("The file already exists");
     	Path source = Paths.get(file);
     	Path target = Paths.get("appData/" + fileName);
