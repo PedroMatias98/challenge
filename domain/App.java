@@ -88,8 +88,12 @@ public class App {
     
     public static void showServicesCommand() {
     	for(Platform p: App.platforms) {
-    		System.out.println("Service name:" + p.getName());
-    		System.out.println("Service Endpoint:" + p.getStatusApiUrl() + "\n");
+    		StringBuilder info = new StringBuilder(); 
+    		info.append("Service name:").append(p.getName()).append("\n");
+    		info.append("Service Endpoint:").append(p.getStatusApiUrl()).append("\n");
+    		//System.out.println("Service name:" + p.getName());
+    		//System.out.println("Service Endpoint:" + p.getStatusApiUrl() + "\n");
+    		System.out.println(info);
     	}
     }
     
@@ -123,12 +127,14 @@ public class App {
     	JSONObject infoJson = null;
     	String status = null;
     	BufferedWriter writer = null;
+    	StringBuilder availability = new StringBuilder();
 		try {
 			writer = new BufferedWriter(new FileWriter("appData/history.txt", true));
 
     	for(Platform p: platforms) {
-    		if(!p.isAccessable(5000))
-    			System.out.println("The service " + p.getName() + "status is down");
+    		if(!p.isAccessable(5000)) {
+    			availability.append("The service ").append(p.getName()).append("status is down");
+    		}
     		else {
     			String info = p.getStatus();
     			JSONParser parser = new JSONParser();
@@ -142,9 +148,11 @@ public class App {
     				status = "up";
     			else
     				status = "down";
-    			System.out.println("[" + p.getId() + "] " + update + " - " + status);
-    			writer.write("[" + p.getId() + "] " + update + " - " + status);
+    			availability.append("[").append(p.getId()).append("] ").append(update).append(" - ").append(status);
+    			System.out.println(availability);
+    			writer.write(availability.toString());
     			writer.newLine();
+    			availability = new StringBuilder();
     			}
     		}
     		writer.close();
