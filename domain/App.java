@@ -14,6 +14,7 @@ import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -176,6 +177,32 @@ public class App {
     	}
     }
     
+    public static void backupCommand(String file) {
+    	try {
+    		System.out.println(file);
+    		BufferedReader reader = new BufferedReader(new FileReader("storedData/storedData.json"));
+        	BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+    	    String line = reader.readLine();
+    	    if(line == null)
+    	    	System.out.println("error: empty file");
+    	    while (line != null) {
+    	    	System.out.println(line);
+    	    	writer.write(line + "\n");
+    	        line = reader.readLine();
+    	    }
+    	    reader.close();
+    	    writer.close();
+    	}
+    	
+    	catch(FileNotFoundException e){
+    		e.getMessage();
+    	}
+    	
+    	catch(IOException e){
+    		e.getMessage();
+    	}
+    }
+    
     public static void getcommandOption(String command) {
     	String[] parts = null;
     	if(command.equals("bot poll"))
@@ -202,6 +229,7 @@ public class App {
     	else if(command.contains("bot backup ")) {
     		parts = command.split("bot backup ");
     		String file = parts[1];
+    		App.backupCommand(file);
     	}
     	
     	else
