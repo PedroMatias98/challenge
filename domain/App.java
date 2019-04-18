@@ -8,6 +8,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import exceptions.EmptyFileException;
+import exceptions.FileAlreadyExistsException;
 import exceptions.InvalidFileFormatException;
 
 import java.io.File;
@@ -91,8 +92,6 @@ public class App {
     		StringBuilder info = new StringBuilder(); 
     		info.append("Service name:").append(p.getName()).append("\n");
     		info.append("Service Endpoint:").append(p.getStatusApiUrl()).append("\n");
-    		//System.out.println("Service name:" + p.getName());
-    		//System.out.println("Service Endpoint:" + p.getStatusApiUrl() + "\n");
     		System.out.println(info);
     	}
     }
@@ -180,19 +179,22 @@ public class App {
 		}
     }
     
-    public static void restoreCommand(String file) throws InvalidFileFormatException,IOException{
+    public static void restoreCommand(String file) throws InvalidFileFormatException,IOException,FileAlreadyExistsException{
     	String[] fileProperties = file.split("/");
     	String fileName = fileProperties[fileProperties.length-1];
     	
     	File fileInfo = new File(file);
         String mimeType = URLConnection.guessContentTypeFromName(fileInfo.getName());
+        System.out.println(mimeType);
     	try {
-    		if(!mimeType.contains("text"))
+    		if(!mimeType.contains("text") && !mimeType.contains("xml"))
     			throw new InvalidFileFormatException("The file has an invalid format");
+    		if(fileInfo.exists())
+    			throw new FileAlreadyExistsException("The file already exists");
     	Path source = Paths.get(file);
     	Path target = Paths.get("appData/" + fileName);
 
-    		Files.copy(source, target);
+    	Files.copy(source, target);
     	} catch(IOException e) {
     		throw new IOException("There was an io error");
     	}
@@ -257,7 +259,7 @@ public class App {
     	);
     }
     
-    public static void getcommandOption(String command) throws EmptyFileException,InvalidFileFormatException,IOException,ParseException{
+    public static void getcommandOption(String command) throws EmptyFileException,InvalidFileFormatException,IOException,ParseException,FileAlreadyExistsException{
     	String[] parts = null;
     	if(command.equals("bot poll"))
     		App.checkServicesAvailability();
@@ -297,7 +299,7 @@ public class App {
     		System.out.println("invalid command");
     }
     
-	public static void main(String[] args) throws EmptyFileException,InvalidFileFormatException,IOException,ParseException{
+	public static void main(String[] args) throws EmptyFileException,InvalidFileFormatException,IOException,ParseException,FileAlreadyExistsException{
         App.readJsonFileWithProperties();
         Scanner scanner = new Scanner(System.in);
         String command = scanner.nextLine();
