@@ -5,17 +5,22 @@ import java.util.Scanner;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import java.io.File;
 
 import java.util.Iterator;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -151,13 +156,20 @@ public class App {
 		}
     }
     
-    public static void backupCommand(String file) {
-    	Path source = Paths.get(file);
+    public static void restoreCommand(String file) {
     	String[] fileProperties = file.split("/");
     	String fileName = fileProperties[fileProperties.length-1];
-    	Path target = Paths.get("appData/" + fileName);
     	
+    	File fileInfo = new File(file);
+        String mimeType = URLConnection.guessContentTypeFromName(fileInfo.getName());
     	try {
+    		if(!mimeType.contains("text")) {
+    			System.out.println("invalid file format");
+    			System.exit(1);
+    	}
+    	Path source = Paths.get(file);
+    	Path target = Paths.get("appData/" + fileName);
+
     		Files.copy(source, target);
     	} catch(IOException e) {
     		e.getMessage();
@@ -181,14 +193,14 @@ public class App {
     	else if(command.equals("bot fetch"))
     		System.out.println("fetch");
     	
-    	else if(command.contains("bot backup ")) {
-    		parts = command.split("bot backup ");
-    		String file = parts[1];
-    		App.backupCommand(file);
-    	}
-    	
     	else if(command.contains("bot restore ")) {
     		parts = command.split("bot restore ");
+    		String file = parts[1];
+    		App.restoreCommand(file);
+    	}
+    	
+    	else if(command.contains("bot backup ")) {
+    		parts = command.split("bot backup ");
     		String file = parts[1];
     	}
     	
