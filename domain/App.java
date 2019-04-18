@@ -186,7 +186,6 @@ public class App {
     	File fileInfo = new File(file);
     	File destFile = new File("appData/" + fileName);
         String mimeType = URLConnection.guessContentTypeFromName(fileInfo.getName());
-        System.out.println(mimeType);
     	try {
     		if(!mimeType.contains("text") && !mimeType.contains("xml"))
     			throw new InvalidFileFormatException("The file has an invalid format");
