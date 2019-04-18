@@ -179,15 +179,19 @@ public class App {
     
     public static void backupCommand(String file) {
     	try {
-    		System.out.println(file);
+    		String directory = "";
+    		String[] parts = file.split("/");
+    		for(int i=0;i<parts.length -1;i++)
+    			directory += parts[i];
+    		Path path = Paths.get(directory);
+    		Files.createDirectories(path);
     		BufferedReader reader = new BufferedReader(new FileReader("storedData/storedData.json"));
-        	BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+        	PrintWriter writer = new PrintWriter(new FileWriter(file));
     	    String line = reader.readLine();
     	    if(line == null)
     	    	System.out.println("error: empty file");
     	    while (line != null) {
-    	    	System.out.println(line);
-    	    	writer.write(line + "\n");
+    	    	writer.println(line);
     	        line = reader.readLine();
     	    }
     	    reader.close();
