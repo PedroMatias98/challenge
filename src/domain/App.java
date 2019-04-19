@@ -38,14 +38,14 @@ public class App {
 
     public static void helpCommand(){
       System.out.println("\nCommand:");
-      System.out.println("\tbot poll - Retrieves the status from of all configured services");
-      System.out.println("\tbot fetch - Retrieves the status from of all configured services within an interval");
-      System.out.println("\tbot services - Lists all known services");
-      System.out.println("\tbot backup - backups the current internal state to a file");
-      System.out.println("\tbot restore - Imports the internal state from another run or app");
-      System.out.println("\tbot history - Outputs all the data from the local storage");
-      System.out.println("\tbot help - This screen");
-      System.out.println("\texit - Closes the app");
+      System.out.println("\tpoll - Retrieves the status from of all configured services");
+      System.out.println("\tfetch - Retrieves the status from of all configured services within an interval");
+      System.out.println("\tservices - Lists all known services");
+      System.out.println("\tbackup - backups the current internal state to a file");
+      System.out.println("\trestore - Imports the internal state from another run or app");
+      System.out.println("\thistory - Outputs all the data from the local storage");
+      //System.out.println("\tstatus - Summarizes data and displays it in a table-like fashion");
+      System.out.println("\thelp - This screen");
     }
 
     @SuppressWarnings("unchecked")
